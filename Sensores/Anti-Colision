@@ -1,0 +1,71 @@
+/*
+Sensor anti-colisión: a distancias inferiores a 150cm(ajustable desde 1 a 500 cm) emite alarma sonora.
+El alcance máximo es de 5 metros(teoricamente, pero a partir de 4 ya da lecturas un poco raras en espacios cerrados)con una apertura angular de 15º; más que suficiente para evitar obstaculos inmediatos.
+El ángulo de expasión de la onda resulta quiza demasiado grande,15º a 5 metros es un abanico muy amplio, lo suyo sería buscar una alternativa con menor ángulo de trabajo para lograr mayor precisión.
+(**Habra 800 modelos de sensores de este tipo, lo suyo sería investigar un poco**)
+
+
+Viabilidad economica: 
+
+Buzzer generico: 4 euros (creo que los vibradores no llegan ni a 3 euros)
+Sensor Ultrasonidos HC-SR04: 3,95 euros
+Pulsador generico: 10 centimos
+Resto: compartimento batería,placa prototipo (no hace falta un arduino, se pueden soldar en una placa vacia los componentes necesarios reduciendo así el tamaño final del dispositivo...sería similar al de media tarjeta de credito)
+Precio total: con carcasa protectora,batería y demás trastos dudo que pasase los 30 euros unidad
+
+Componentes:
+
+ HC-SR04:
+  Esquema de conexiones:
+    VCC al arduino 5v 
+    GND al arduino GND
+    Echo al Arduino pin 6 
+    Trig al Arduino pin 7
+
+ Buzzer 12VDC
+  Positivo al pin 12
+  Negativo a GND más proxima al pin 12(por comodidad)
+ 
+ */
+ 
+#define Pecho 6 
+#define Ptrig 7
+#define buzzer 12
+long duracion, distancia;   
+
+ 
+void setup() {                
+  Serial.begin (9600);       // inicializa el puerto serial a 9600 baudios (para poder ver en consola lo que estamos ejecutando) ARRIBA A LA DERECHA EN LA LUPA!! si le das durante la ejecución te va cantando las distancias que registra el sensor
+  pinMode(Pecho, INPUT);     // define el pin 6 como entrada (echo)
+  pinMode(Ptrig, OUTPUT);    // define el pin 7 como salida  (triger)
+  pinMode(buzzer, OUTPUT);
+  }
+  
+void loop() {
+  
+  digitalWrite(Ptrig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(Ptrig, HIGH);   // genera el pulso de triger por 10ms
+  delayMicroseconds(10);
+  digitalWrite(Ptrig, LOW);
+  
+  duracion = pulseIn(Pecho, HIGH);
+  distancia = (duracion/2) / 29;            // calcula la distancia en centimetros (dividimos entre 2 por que el sensor nos devuelve el tiempo de ida y vuelta,osea el doble de la distancia que nos interesa)
+  
+  if (distancia >= 500 || distancia <= 0){  // si la distancia es mayor a 500cm o menor a 0cm 
+    Serial.println("---");                  // no mide nada
+  }
+  else {
+    Serial.print(distancia);                // envia el valor de la distancia por el puerto serial
+    Serial.println("cm");                   // le coloca a la distancia los centimetros "cm"
+    digitalWrite(buzzer, 0);                // en low el pin 13
+  }
+  
+   if (distancia <= 150 && distancia >= 1){
+    digitalWrite(buzzer, 1);                  // en alto el pin 13, si la distancia es menor a 150cm, empieza a sonar el buzzer (manipulando la sentencia if puedes lanzar el aviso cuando mas te convenga)
+    delay(50);
+    digitalWrite(buzzer,0);
+    Serial.println("Alarma.......");         // envia la palabra Alarma por el puerto serial
+  }
+  delay(400);                                // espera 400ms para que se logre ver la distancia en la consola
+}
